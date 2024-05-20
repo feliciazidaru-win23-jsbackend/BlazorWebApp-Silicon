@@ -8,12 +8,47 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Components\Sections\Footer.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BlazorWebApp.Client\BlazorWebApp.Client.csproj" />
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.17.5" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Components\Sections\Footer.razor" />
+    <None Include="wwwroot\scss\components\_alert.scss" />
+    <None Include="wwwroot\scss\components\_buttons.scss" />
+    <None Include="wwwroot\scss\components\_forms.scss" />
+    <None Include="wwwroot\scss\components\_links.scss" />
+    <None Include="wwwroot\scss\core\_base.scss" />
+    <None Include="wwwroot\scss\core\_colors.scss" />
+    <None Include="wwwroot\scss\core\_media.scss" />
+    <None Include="wwwroot\scss\core\_typography.scss" />
+    <None Include="wwwroot\scss\sections\_accountdetails.scss" />
+    <None Include="wwwroot\scss\sections\_courses.scss" />
+    <None Include="wwwroot\scss\sections\_darklight.scss" />
+    <None Include="wwwroot\scss\sections\_dashboard.scss" />
+    <None Include="wwwroot\scss\sections\_download.scss" />
+    <None Include="wwwroot\scss\sections\_error.scss" />
+    <None Include="wwwroot\scss\sections\_features.scss" />
+    <None Include="wwwroot\scss\sections\_footer.scss" />
+    <None Include="wwwroot\scss\sections\_header.scss" />
+    <None Include="wwwroot\scss\sections\_showcase.scss" />
+    <None Include="wwwroot\scss\sections\_signin.scss" />
+    <None Include="wwwroot\scss\sections\_signup.scss" />
+    <None Include="wwwroot\scss\sections\_subscribe.scss" />
+    <None Include="wwwroot\scss\sections\_tools.scss" />
+    <None Include="wwwroot\scss\_components.scss" />
+    <None Include="wwwroot\scss\_core.scss" />
+    <None Include="wwwroot\scss\_sections.scss" />
   </ItemGroup>
 
 </Project>

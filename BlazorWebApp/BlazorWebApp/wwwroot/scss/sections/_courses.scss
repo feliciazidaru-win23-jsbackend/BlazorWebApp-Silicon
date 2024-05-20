@@ -1,0 +1,238 @@
+#courses {
+    padding-top: 3rem;
+    padding-bottom: 5rem;
+
+    .container {
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+
+            .right-controls {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+
+                .dropdown, .input-search-group {
+                    min-width: 200px;
+                }
+
+                .dropdown {
+                    padding: 0.5rem 1rem;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    font-size: 1rem;
+                    background: white;
+                }
+
+                .input-search-group {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    background-color: white;
+
+                    input {
+                        flex-grow: 1;
+                        border: none;
+                        padding: 0.5rem 2.5rem 0.5rem 1rem;
+                        font-size: 1rem;
+                    }
+
+                    .search-icon {
+                        position: absolute;
+                        right: 10px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        color: #333;
+                        cursor: pointer;
+                        background-color: transparent;
+                        padding: 0.5rem;
+                        margin-right: 0.5rem;
+                    }
+                }
+            }
+        }
+
+        .course-items {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            padding: 0 20px;
+
+            .course {
+                position: relative;
+                display: block;
+                border-radius: 8px;
+                overflow: hidden;
+                text-decoration: none;
+                box-shadow: 0 0 14px -4px #cccccc;
+                color: #707070;
+
+                &:hover {
+                    box-shadow: 0 0 14px -4px #888888;
+                }
+
+                img {
+                    width: 100%;
+                    height: auto;
+                }
+
+                .bestseller, .bookmark {
+                    position: absolute;
+                    top: 10px;
+                    padding: 0.5rem;
+                    font-size: 0.70rem;
+                    border-radius: 5px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .bestseller {
+                    left: 10px;
+                    background-color: $success;
+                    color: $white;
+
+                    p {
+                        margin: 0;
+                        padding:0;
+                    }
+                }
+
+                .bookmark {
+                    right: 10px;
+                    background-color: $white;
+                    border: none;
+                    cursor: pointer;
+                    transition: 0.2s;
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+
+                    &:hover {
+                        background: $theme;
+                        color: $white;
+                        border: 1px solid $theme;
+                    }
+                }
+
+                .content {
+                    padding: 15px;
+
+                    .title {
+                        @include h5;
+                        text-align: left;
+                        padding: 0 10px;
+                    }
+
+                    p.author {
+                        @include text-s;
+                        color: $gray-600;
+                        text-align: left;
+                        padding: 0 10px;
+                    }
+
+                    .pricing {
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 10px;
+
+                        .discount {
+                            font-weight: bold;
+                            @include text-m;
+                            margin-right: 10px;
+                        }
+
+                        .price {
+
+                            @include text-m;
+
+                            &.price {
+                                color: $info;
+                            }
+
+                            &.discount-enabled {
+                                text-decoration: line-through;
+                                color: $gray-500;
+                            }
+                        }
+                    }
+
+                    hr {
+                        border: none;
+                        height: 1px;
+                        background-color: $gray-500;
+                        margin: 10px 0;
+                    }
+
+                    .footer {
+                        display: flex;
+                        align-items: center;
+                        font-size: 12px;
+                        color: $gray-500;
+
+                        .hours, .likes {
+                            @include text-xs;
+                            margin-right: 10px;
+                        }
+                    }
+                }
+            }
+        }
+
+        .get-started {
+            background-color: $gray-100;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 50px;
+            margin-left: 20px;
+            margin-right: 20px;
+
+
+            .text-box {
+                h2 {
+                    font-weight: 700;
+                    margin-bottom: 10px;
+                    width: 350px;
+                    font-size: 30px;
+
+                    span {
+                        color: $info;
+                    }
+                }
+
+                a {
+                    width: 162px;
+                    margin-top: 30px;
+                    text-align: center;
+                }
+            }
+
+            .image-box {
+                display: none;
+
+                @include lg {
+                    display: block;
+                }
+            }
+        }
+
+
+        @media (max-width: 1024px) {
+            .course-items {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .course-items {
+                grid-template-columns: 1fr;
+            }
+        }
+    }
+}
