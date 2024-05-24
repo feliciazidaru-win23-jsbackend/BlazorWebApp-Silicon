@@ -1,2 +1,6 @@
 ﻿@using BlazorWebApp.Components.Account.Shared
 @layout AccountLayout
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Login> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager

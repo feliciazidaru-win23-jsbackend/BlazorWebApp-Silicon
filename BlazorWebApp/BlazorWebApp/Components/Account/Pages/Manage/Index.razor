@@ -1,8 +1,9 @@
-﻿@page "/Account/Manage"
+﻿@* @page "/Account/Manage"
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
 @using BlazorWebApp.Data
+
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
@@ -11,27 +12,50 @@
 
 <PageTitle>Profile</PageTitle>
 
-<h3>Profile</h3>
-<StatusMessage />
 
-<div class="row">
-    <div class="col-md-6">
-        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
-                <label for="username" class="form-label">Username</label>
-            </div>
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
-                <label for="phone-number" class="form-label">Phone number</label>
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
-        </EditForm>
-    </div>
-</div>
+        <div class="details">
+            <section class="basic-info">
+                <h2>Account Details</h2>
+                <h5>Account Info</h5>
+                <StatusMessage />
+             
+                    <EditForm Model="Basic" FormName="Basic" OnValidSubmit="OnValidSubmitAsync" method="post">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger" role="alert" />
+                        <div id="form-firstname" class="input-group">
+                            <label for="first-name" class="form-label">Firstname</label>
+                            <InputText @bind-Value="Basic.FirstName" class="form-control" placeholder="Please enter your first name." />
+                            <ValidationMessage For="() => Basic.FirstName" class="text-danger" />
+                        </div>
+                        <div id="form-lastname" class="input-group">
+                            <label for="last-name" class="form-label">Lastname</label>
+                            <InputText @bind-Value="Basic.LastName" class="form-control" placeholder="Please enter your last name." />
+                            <ValidationMessage For="() => Basic.LastName" class="text-danger" />
+                        </div>
+                        <div id="form-email" class="input-group">
+                            <label for="email" class="form-label">Email address</label>
+                            <InputText @bind-Value="Basic.Email" class="form-control" placeholder="Please enter your email." />
+                            
+                            <ValidationMessage For="() => Basic.Email" class="text-danger" />
+                        </div>
+                        <div class="form-phone">
+                            <label for="phone-number" class="form-label">Phone number</label>
+                            <InputText @bind-Value="Basic.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                           
+                            <ValidationMessage For="() => Basic.PhoneNumber" class="text-danger" />
+                        </div>
+                        <div id="form-bio" class="input-group">
+                            <label for="bio">Bio<span>(optional)</span></label>
+                            <textarea @bind="Basic.Biography"></textarea>
+                        </div>
+                        <div class="form-buttons">
+                            <button class="btn-gray" type="reset">Cancel</button>
+                            <button class="btn-theme" type="submit">Save changes</button>
+                        </div>
+                    </EditForm>
+                
+            </section>
+        </div>
 
 @code {
     private ApplicationUser user = default!;
@@ -42,36 +66,78 @@
     private HttpContext HttpContext { get; set; } = default!;
 
     [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    private BasicInfoFormViewModel Basic { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
-        username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
-        Input.PhoneNumber ??= phoneNumber;
+        // Pre-populate form fields with user information
+     /*    Basic.FirstName = await UserManager.GetUserNameAsync(user); */ // Assuming UserName reflects first name
+
+        Basic.Email = user.Email;
+        Basic.PhoneNumber ??= phoneNumber;
+  
     }
 
     private async Task OnValidSubmitAsync()
     {
-        if (Input.PhoneNumber != phoneNumber)
+        if (Basic.PhoneNumber != phoneNumber)
         {
-            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Basic.PhoneNumber);
             if (!setPhoneResult.Succeeded)
             {
                 RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
             }
         }
 
+        // Update user properties based on changes
+        user.UserProfile.FirstName = Basic.FirstName;
+        user.UserProfile.LastName = Basic.LastName;
+        user.Email = Basic.Email; // Update email if allowed
+
+        var updateResult = await UserManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            // Handle update errors (e.g., display error messages)
+        }
+
         await SignInManager.RefreshSignInAsync(user);
         RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
     }
-
-    private sealed class InputModel
+    public class BasicInfoFormViewModel
     {
-        [Phone]
-        [Display(Name = "Phone number")]
+        public string UserId { get; set; } = null!;
+
+        [Display(Name = "First Name", Prompt = "Enter your first name", Order = 0)]
+        [Required(ErrorMessage = "First name is required")]
+        [DataType(DataType.Text)]
+        public string FirstName { get; set; } = null!;
+
+
+        [Display(Name = "Last Name", Prompt = "Enter your last name", Order = 1)]
+        [Required(ErrorMessage = "Last name is required")]
+        [DataType(DataType.Text)]
+        public string LastName { get; set; } = null!;
+
+
+        [Display(Name = "Email address", Prompt = "Enter your email address", Order = 2)]
+        [DataType(DataType.EmailAddress)]
+        [Required(ErrorMessage = "Email address is required")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Please enter a valid email address.")]
+        public string Email { get; set; } = null!;
+
+
+
+        [Display(Name = "Phone", Prompt = "Enter your phone number ", Order = 3)]
+        [DataType(DataType.PhoneNumber)]
         public string? PhoneNumber { get; set; }
+
+
+        [Display(Name = "Bio", Prompt = "Add a short bio...", Order = 4)]
+        [DataType(DataType.MultilineText)]
+        public string? Biography { get; set; }
     }
 }
+ *@

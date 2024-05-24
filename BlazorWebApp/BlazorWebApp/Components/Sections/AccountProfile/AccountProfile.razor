@@ -1,0 +1,83 @@
+﻿@* @page "/Account/Manage"
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject HttpClient Http
+@attribute [StreamRendering]
+
+        @if (user != null)
+        {
+            <section class="profile-info">
+                <div class="image-container">
+                    <img class="profile-info-img" src="@user.UserProfile?.ProfileImageUrl" alt="@user.UserProfile?.FirstName @user.UserProfile?.LastName">
+                    <EditForm enctype="multipart/form-data" method="post" Model="FileUploadForm" OnValidSubmit="HandleSubmit" >
+                        <DataAnnotationsValidator />
+                        <InputFile id="fileUploader" OnChange="HandleFileSelected" accept="image/*" />
+                        <label for="fileUploader" class="btn btn-circle btn-circle-sm">
+                            <i class="fa-regular fa-refresh"></i>
+                        </label>
+                    </EditForm>
+                </div>
+                <h5>@user.UserProfile?.FirstName @user.UserProfile?.LastName</h5>
+                <p>@user.Email</p>
+            </section>
+        }
+        else
+        {
+            <p>Loading user profile...</p>
+        }
+
+@code {
+    [SupplyParameterFromQuery]
+    private string? StatusMessage { get; set; }
+
+    [SupplyParameterFromForm]
+    private FileUploadModel FileUploadForm { get; set; } = new();
+
+    private ApplicationUser? user = null;
+    private Stream? SelectedFileStream { get; set; }
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserManager.GetUserAsync(HttpContext.User) ?? null!;
+
+    }
+
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        SelectedFileStream = file.OpenReadStream();
+        FileUploadForm.File = file;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (SelectedFileStream != null && user != null)
+        {
+            using var content = new MultipartFormDataContent();
+            content.Add(new StreamContent(SelectedFileStream), "file", FileUploadForm.File.Name);
+
+            var response = await Http.PostAsync("https://filesprovider.azurewebsites.net/api/Upload?code=Z7ZpHypXSLFd8zG747kMU6_I7s52AcvWOtUSSNLoZJ0MAzFu_1U6Aw%3D%3D", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var imageUrl = await response.Content.ReadAsStringAsync();
+                await UserManager.UpdateAsync(user);
+                StateHasChanged();
+            }
+            else
+            {
+                StatusMessage = "Something went wrong. Try again!";
+            }
+        }
+    }
+
+    public class FileUploadModel
+    {
+        public IBrowserFile File { get; set; } = null!;
+    }
+}
+ *@
