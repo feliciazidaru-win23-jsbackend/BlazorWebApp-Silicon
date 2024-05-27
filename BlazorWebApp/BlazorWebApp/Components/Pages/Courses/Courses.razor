@@ -53,7 +53,7 @@
                             <hr />
                             <div class="footer">
                                 <div class="hours">
-                                    <i class="fa-regular fa-clock"></i>@course.Hours hours
+                                    <i class="fa-regular fa-clock"></i>@course.Hours
                                 </div>
                                 <div class="likes">
                                     <i class="fa-regular fa-thumbs-up"></i>@course.LikesInPercent (@course.LikesInNumbers)
@@ -76,7 +76,7 @@
                 <button class="btn-theme" asp-action="" asp-controller="">Work with us</button>
             </div>
             <div class="image-box">
-                <img src="/Images/illustration.svg" alt="banner image">
+                <img src="https://silicon.blob.core.windows.net/courses/illustration.svg" alt="banner image">
             </div>
         </div>
     </div>
@@ -203,8 +203,7 @@
 
     public class Author
     {
-        public decimal Price { get; set; }
-        public decimal Discount { get; set; }
+        public string? Name { get; set; }
     }
     public class Prices
     {

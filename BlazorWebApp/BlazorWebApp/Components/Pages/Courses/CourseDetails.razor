@@ -1,0 +1,282 @@
+﻿@page "/Courses/Details/{id}"
+@using BlazorWebApp.Components.GraphQL
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+@code {
+    [Parameter] public string Id { get; set; } = default!;
+
+    private Course? course;
+    private string? statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var query = new GraphQlQuery
+                {
+                    Query = $@"
+                {{
+                    getCourseById(id: ""{Id}"") {{
+                        id
+                        imageUri
+                        imageHeaderUri
+                        isBestseller
+                        isDigital
+                        categories
+                        title
+                        ingress
+                        starRating
+                        reviews
+                        likes
+                        likesInPercent
+                        hours
+                        authors {{
+                            name
+                        }}
+                        prices {{
+                            currency
+                            price
+                            discount
+                        }}
+                        content {{
+                            description
+                            includes
+                            programDetails {{
+                                id
+                                title
+                                description
+                            }}
+                        }}
+                    }}
+                }}"
+                };
+
+            var response = await Http.PostAsJsonAsync("https://courses-provider.azurewebsites.net/api/graphql?code=G2MRX03uMzcUwrgGtP75jTVAcUQB_UAz4ze_kHy0dn4JAzFu0doYJw%3D%3D", query);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<DynamicGraphQLResponse>();
+
+                if (result?.Data.TryGetProperty("getCourseById", out var courseElement) == true)
+                {
+                    course = new Course
+                        {
+                            Id = courseElement.GetProperty("id").GetString(),
+                            ImageUri = courseElement.GetProperty("imageUri").GetString(),
+                            ImageHeaderUri = courseElement.GetProperty("imageHeaderUri").GetString(),
+                            IsBestseller = courseElement.GetProperty("isBestseller").GetBoolean(),
+                            IsDigital = courseElement.GetProperty("isDigital").GetBoolean(),
+                            Categories = courseElement.GetProperty("categories").EnumerateArray().Select(c => c.GetString()).ToArray(),
+                            Title = courseElement.GetProperty("title").GetString(),
+                            Ingress = courseElement.GetProperty("ingress").GetString(),
+                            StarRating = courseElement.GetProperty("starRating").GetDecimal(),
+                            Reviews = courseElement.GetProperty("reviews").GetString(),
+                            Likes = courseElement.GetProperty("likes").GetString(),
+                            LikesInPercent = courseElement.GetProperty("likesInPercent").GetString(),
+                            Hours = courseElement.GetProperty("hours").GetString(),
+                            Authors = courseElement.GetProperty("authors").EnumerateArray().Select(a => new Author
+                            {
+                                Name = a.GetProperty("name").GetString()
+                            }).ToList(),
+                            Prices = new Prices
+                            {
+                                Currency = courseElement.GetProperty("prices").GetProperty("currency").GetString(),
+                                Price = courseElement.GetProperty("prices").GetProperty("price").GetDecimal(),
+                                Discount = courseElement.GetProperty("prices").GetProperty("discount").GetDecimal()
+                            },
+                            Content = new Content
+                            {
+                                Description = courseElement.GetProperty("content").GetProperty("description").GetString(),
+                                Includes = courseElement.GetProperty("content").GetProperty("includes").EnumerateArray().Select(i => i.GetString()).ToArray(),
+                                ProgramDetails = courseElement.GetProperty("content").GetProperty("programDetails").EnumerateArray().Select(p => new ProgramDetailItem
+                                {
+                                    Id = p.GetProperty("id").GetInt32(),
+                                    Title = p.GetProperty("title").GetString(),
+                                    Description = p.GetProperty("description").GetString()
+                                }).ToList()
+                            }
+                        };
+                }
+                else
+                {
+                    statusMessage = "Unable to retrieve course details from the response.";
+                }
+            }
+            else
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                statusMessage = $"HTTP request failed with status code: {response.StatusCode}. Response: {responseContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+
+    public class Course
+    {
+        public string Id { get; set; } = null!;
+        public string? ImageUri { get; set; }
+        public string? ImageHeaderUri { get; set; }
+        public bool IsBestseller { get; set; }
+        public bool IsDigital { get; set; }
+        public string[]? Categories { get; set; }
+        public string? Title { get; set; }
+        public string? Ingress { get; set; }
+        public decimal StarRating { get; set; }
+        public string? Reviews { get; set; }
+        public string? LikesInPercent { get; set; }
+        public string? Likes { get; set; }
+        public string? Hours { get; set; }
+
+        public List<Author>? Authors { get; set; }
+        public Prices? Prices { get; set; }
+        public Content? Content { get; set; }
+    }
+
+    public class Author
+    {
+        public string? Name { get; set; }
+    }
+
+    public class Content
+    {
+        public string? Description { get; set; }
+        public string[]? Includes { get; set; }
+        public List<ProgramDetailItem>? ProgramDetails { get; set; }
+    }
+
+    public class Prices
+    {
+        public string? Currency { get; set; }
+        public decimal Price { get; set; }
+        public decimal Discount { get; set; }
+    }
+
+    public class ProgramDetailItem
+    {
+        public int Id { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+    }
+}
+
+<section id="coursedetails">
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="alert-danger">@statusMessage</div>
+    }
+
+    @if (course != null)
+    {
+        <div class="img-header">
+            <img src="@course.ImageHeaderUri" alt="@course.Title">
+        </div>
+        <div class="container">
+            <div class="text-header">
+                <div class="bread-crumbs">
+                    <a href="/">Home</a> <i class="fa-solid fa-angles-right"></i>
+                    <a href="/Courses">Courses</a> <i class="fa-solid fa-angles-right"></i>
+                    <a href="/Courses/Details/@course.Id">@course.Title</a>
+                </div>
+                <div class="title-description">
+                    <div class="labels">
+                        @if (course.IsBestseller)
+                        {
+                            <div class="bestseller">Best Seller</div>
+                        }
+                        @if (course.IsDigital)
+                        {
+                            <div class="digital">Digital</div>
+                        }
+                    </div>
+                    <h1 class="title">@course.Title</h1>
+                    <p class="text">@course.Ingress</p>
+                    <div class="info">
+                        <div class="stars">
+                            @for (int i = 0; i < (int)course.StarRating; i++)
+                            {
+                                <i class="fa-solid fa-star" style="color: #FFBA08;"></i>
+                            }
+                            @for (int i = (int)course.StarRating; i < 5; i++)
+                            {
+                                <i class="fa-regular fa-star" style="color: #B4B7C9;"></i>
+                            }
+                        </div>
+                        <div class="thumbs">
+                            <i class="fa-light fa-thumbs-up" style="color: #B4B7C9;"></i>
+                            <span>@course.Likes</span>
+                        </div>
+                        <div class="hours">
+                            <i class="fa-regular fa-clock" style="color: #B4B7C9;"></i>
+                            <span>@course.Hours hours</span>
+                        </div>
+                    </div>
+                    <div class="creator">
+                        <div class="created">Created by</div>
+                        <div class="creator-name">
+                            @foreach (var author in course.Authors)
+                            {
+                                <p>@author.Name</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <div class="description">
+                    <div class="description-title">
+                        <h1>Course Description</h1>
+                        <p>@course.Content?.Description</p>
+                    </div>
+                    <div class="learn">
+                        <h3>What you'll learn</h3>
+                        @if (course.Content?.Includes != null)
+                        {
+                            @foreach (var item in course.Content.Includes)
+                            {
+                                <div class="learnlist">
+                                    <i class="fa-regular fa-circle-check" style="color: #6366f1;"></i>
+                                    <p>@item</p>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="details">
+                        <h2>Program Details</h2>
+                        @foreach (var detail in course.Content.ProgramDetails)
+                        {
+                            <div class="detail">
+                                <div class="number"><h2>@detail.Id</h2></div>
+                                <div class="divider"></div>
+                                <h3 class="detail-title">@detail.Title</h3>
+                                <p class="text">@detail.Description</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="aside-info">
+                    <h4>This course includes:</h4>
+                    <div class="info"><i class="fa-light fa-newspaper"></i>@course.Reviews</div>
+                    <div class="info"><i class="fa-regular fa-download"></i>@course.LikesInPercent downloadable resources</div>
+                    <div class="info"><i class="fa-regular fa-infinity"></i>Full lifetime access</div>
+                    <div class="info"><i class="fa-light fa-file-certificate"></i>Certificate of completion</div>
+                    <div class="prices">
+                        @if (course.Prices?.Discount > 0)
+                        {
+                            <h2 class="current-price">$@course.Prices.Discount</h2>
+                            <h4 class="original-price">$@course.Prices.Price</h4>
+                        }
+                        else
+                        {
+                            <h2 class="current-price">$@course.Prices?.Price</h2>
+                        }
+                    </div>
+                        <button class="btn btn-theme-s" type="submit">Join course</button>
+                </div>
+            </div>
+        </div>
+    }
+</section>
