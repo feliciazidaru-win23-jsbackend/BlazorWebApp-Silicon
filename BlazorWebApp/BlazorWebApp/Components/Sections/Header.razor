@@ -1,4 +1,8 @@
-﻿<header> 
+﻿@using BlazorWebApp.Services
+@inject UserProfileService UserProfileService
+@implements IDisposable
+
+<header> 
     <div class="container">
         <a id="logo" href="/">
             <img src="images/Silicon Logotype - Light Mode.svg" alt="Silicon Logotype" />
@@ -31,8 +35,8 @@
                  <Authorized>
                     <div class="profile-img">
 
-                       <a href="/account/manage">    
-                                  <img src="images/avatar.jpg" alt="Default Profile Image" />     
+                       <a href="/account/manage">
+                            <img src="@UserProfileService.ProfileImageUrl" alt="Default Profile Image" />
                         </a>
                      </div>
                  </Authorized>
@@ -46,3 +50,20 @@
     </div>
 </header>
 
+@code{
+
+    protected override void OnInitialized()
+    {
+        UserProfileService.OnProfileImageUpdated += UpdateProfileImage;
+    }
+
+    private void UpdateProfileImage()
+    {
+        StateHasChanged();
+    }
+    public void Dispose()
+    {
+        UserProfileService.OnProfileImageUpdated -= UpdateProfileImage;
+    }
+
+}

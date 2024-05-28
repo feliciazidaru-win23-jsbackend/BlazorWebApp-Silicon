@@ -1,12 +1,18 @@
 ﻿@page "/Account/Manage"
 @using BlazorWebApp.Components.Account.Shared
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.Logging
 @layout ManageLayout
+@attribute [Authorize]
 @attribute [StreamRendering]
 @rendermode InteractiveServer
+
 @inject UserManager<ApplicationUser> UserManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@using Microsoft.EntityFrameworkCore;
+@inject ILogger<AccountProfile> Logger
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+
 <div class="details-form">
     <h2 class="title">Account Details</h2>
     <h6>Basic info</h6>
@@ -84,16 +90,17 @@
                 </div>
             </div>
             <div class="buttons">
-                <button @onclick="ClearForm">Clear form</button>
+                <button @onclick="ClearForm" class="btn-gray">Cancel</button>
                 <button type="submit" class="button btn-theme">Save changes</button>
             </div>
         </div>
         <ValidationSummary Model="DetailsForm" />
     </EditForm>
 </div>
+
+
 @code {
-    [CascadingParameter]
-    public ApplicationUser _user { get; set; }
+    public ApplicationUser? _user;
 
     [SupplyParameterFromQuery]
     public string statusMessage { get; set; } = "";
@@ -151,10 +158,13 @@
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var userPrincipal = authState.User;
 
-           _user = await UserManager.Users
-            .Include(u => u.UserProfile)
-            .Include(u => u.UserAddress)
-            .FirstOrDefaultAsync(u => u.Id == UserManager.GetUserId(userPrincipal));
+      
+            using var context = DbContextFactory.CreateDbContext();
+
+            _user = await context.Users
+                .Include(u => u.UserProfile)
+                .Include(u => u.UserAddress)
+                .FirstOrDefaultAsync(u => u.Id == UserManager.GetUserId(userPrincipal));
 
             DetailsForm = new AccountDetailsForm
                 {
@@ -171,9 +181,11 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Logger.LogError(ex, "An error occurred while initializing the component.");
+            statusMessage = $"Error: {ex.Message}";
         }
     }
+
 
     public async Task OnValidSubmit(EditContext editContext)
     {
@@ -219,13 +231,13 @@
                 }
                 user.Email = DetailsForm.Email;
                 user.PhoneNumber = DetailsForm.Phone ?? "";
-                // user.Modified = DateTime.Now;
+               
 
                 var result = await UserManager.UpdateAsync(user);
 
                 if (!result.Succeeded)
                 {
-                    statusMessage = "An error occured while updating the account details.";
+                    statusMessage = $"An error occurred while updating the account details: {result.Errors.FirstOrDefault()?.Description}";
                     return;
                 }
                 else

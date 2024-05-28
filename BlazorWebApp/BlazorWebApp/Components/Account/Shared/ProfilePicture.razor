@@ -1,0 +1,131 @@
+@using BlazorWebApp.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using BlazorWebApp.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Text.Json
+
+@inject UserProfileService UserProfileService
+@inject IDbContextFactory<ApplicationDbContext> DbContextFactory
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+@if (user != null)
+{
+    <section class="profile-info">
+        <div class="image-container">
+            <img class="profile-info-img" src="@profileImageUrl" alt="@user.UserProfile?.FirstName @user.UserProfile?.LastName">
+            <EditForm Model="uploadModel" OnValidSubmit="UploadFile">
+                <InputFile id="fileUploader" OnChange="HandleFileSelected" accept="image/*" hidden />
+                <label for="fileUploader" class="btn btn-circle btn-circle-sm">
+                    <i class="fa-regular fa-refresh"></i>
+                </label>
+            </EditForm>
+        </div>
+        <h5>@user.UserProfile?.FirstName @user.UserProfile?.LastName</h5>
+        <p>@user.Email</p>
+    </section>
+}
+else
+{
+    <p>Loading user profile...</p>
+}
+
+@code {
+    private ApplicationDbContext dbContext;
+    private ApplicationUser? user;
+    public IBrowserFile? selectedFile;
+    private string? profileImageUrl;
+    private string? statusMessage;
+    private MultipartFormDataContent uploadModel = new MultipartFormDataContent();
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private async Task LoadUserDataAsync()
+    {
+        if (dbContext == null)
+            dbContext = DbContextFactory.CreateDbContext();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var userClaims = authState.User;
+
+        if (userClaims.Identity.IsAuthenticated)
+        {
+            var userId = UserManager.GetUserId(userClaims);
+
+            user = await dbContext.Users.Include(u => u.UserProfile).FirstOrDefaultAsync(u => u.Id == userId);
+            if (user?.UserProfile?.ProfileImageUrl != null)
+            {
+                profileImageUrl = user.UserProfile.ProfileImageUrl;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserDataAsync();
+    }
+
+    private async void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        var resizedImage = await selectedFile.RequestImageFileAsync(selectedFile.ContentType, 400, 400);
+
+        using var stream = resizedImage.OpenReadStream(maxAllowedSize: 1024 * 1024 * 15);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var bytes = ms.ToArray();
+        profileImageUrl = $"data:{selectedFile.ContentType};base64,{Convert.ToBase64String(bytes)}";
+
+        StateHasChanged();
+
+        
+        await UploadFile();
+    }
+
+    private async Task UploadFile()
+    {
+        if (selectedFile != null)
+        {
+            using var content = new MultipartFormDataContent();
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 1024 * 1024 * 15));
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(selectedFile.ContentType);
+            content.Add(fileContent, "file", selectedFile.Name);
+
+            try
+            {
+                var response = await Http.PostAsync("https://filesprovider.azurewebsites.net/api/Upload?code=Z7ZpHypXSLFd8zG747kMU6_I7s52AcvWOtUSSNLoZJ0MAzFu_1U6Aw%3D%3D&containerName=profileimages", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var jsonResponse = JsonDocument.Parse(responseContent);
+                    var uploadedImageUrl = jsonResponse.RootElement.GetProperty("filePath").GetString();
+
+                    if (!string.IsNullOrEmpty(uploadedImageUrl))
+                    {
+                        user.UserProfile.ProfileImageUrl = uploadedImageUrl;
+                        await dbContext.SaveChangesAsync();
+
+                        UserProfileService.SetProfileImageUrl(uploadedImageUrl);
+
+                        await LoadUserDataAsync();
+                        StateHasChanged();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+    }
+}
