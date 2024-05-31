@@ -16,7 +16,15 @@ namespace BlazorWebApp.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            // Customize the ASP.NET Identity model and override the defaults if needed.
+            builder.Entity<ApplicationUser>()
+                 .HasOne(a => a.UserProfile)
+                 .WithOne()
+                 .HasForeignKey<ApplicationUser>(a => a.UserProfileId);
+
+            builder.Entity<ApplicationUser>()
+                .HasOne(a => a.UserAddress)
+                .WithOne()
+                .HasForeignKey<ApplicationUser>(a => a.UserAddressId);
         }
     }
 }

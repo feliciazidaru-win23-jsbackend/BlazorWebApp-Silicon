@@ -185,8 +185,6 @@
             statusMessage = $"Error: {ex.Message}";
         }
     }
-
-
     public async Task OnValidSubmit(EditContext editContext)
     {
         if (DetailsForm.FirstName != null && DetailsForm.LastName != null && DetailsForm.Email != null)
@@ -196,12 +194,14 @@
             {
                 if (user.UserProfile == null)
                 {
-                    user.UserProfile = new UserProfile
+                    var userProfile = new UserProfile
                         {
                             FirstName = DetailsForm.FirstName,
                             LastName = DetailsForm.LastName,
                             Biography = DetailsForm.Bio ?? ""
                         };
+                    user.UserProfile = userProfile;
+                    user.UserProfileId = userProfile.Id;  // Set the UserProfileId here
                 }
                 else
                 {
@@ -212,15 +212,15 @@
 
                 if (user.UserAddress == null)
                 {
-                    user.UserAddress = new UserAddress
+                    var userAddress = new UserAddress
                         {
-                            Id = Guid.NewGuid().ToString(),
-
                             AddressLine_1 = DetailsForm.AddressLine_1 ?? "",
                             AddressLine_2 = DetailsForm.AddressLine_2 ?? "",
                             PostalCode = DetailsForm.PostalCode ?? "",
                             City = DetailsForm.City ?? ""
                         };
+                    user.UserAddress = userAddress;
+                    user.UserAddressId = userAddress.Id;  // Set the UserAddressId here
                 }
                 else
                 {
@@ -229,9 +229,9 @@
                     user.UserAddress.PostalCode = DetailsForm.PostalCode ?? "";
                     user.UserAddress.City = DetailsForm.City ?? "";
                 }
+
                 user.Email = DetailsForm.Email;
                 user.PhoneNumber = DetailsForm.Phone ?? "";
-               
 
                 var result = await UserManager.UpdateAsync(user);
 
@@ -253,5 +253,71 @@
             }
         }
     }
+
+
+//    public async Task OnValidSubmit(EditContext editContext)
+// {
+//     if (DetailsForm.FirstName != null && DetailsForm.LastName != null && DetailsForm.Email != null)
+//     {
+//         var user = await UserManager.FindByEmailAsync(DetailsForm.Email);
+//         if (user != null)
+//         {
+//             if (user.UserProfile == null)
+//             {
+//                 user.UserProfile = new UserProfile
+//                 {
+//                     FirstName = DetailsForm.FirstName,
+//                     LastName = DetailsForm.LastName,
+//                     Biography = DetailsForm.Bio ?? ""
+//                 };
+//             }
+//             else
+//             {
+//                 user.UserProfile.FirstName = DetailsForm.FirstName;
+//                 user.UserProfile.LastName = DetailsForm.LastName;
+//                 user.UserProfile.Biography = DetailsForm.Bio;
+//             }
+
+//             if (user.UserAddress == null)
+//             {
+//                 user.UserAddress = new UserAddress
+//                 {
+//                     AddressLine_1 = DetailsForm.AddressLine_1 ?? "",
+//                     AddressLine_2 = DetailsForm.AddressLine_2 ?? "",
+//                     PostalCode = DetailsForm.PostalCode ?? "",
+//                     City = DetailsForm.City ?? ""
+//                 };
+//             }
+//             else
+//             {
+//                 user.UserAddress.AddressLine_1 = DetailsForm.AddressLine_1 ?? "";
+//                 user.UserAddress.AddressLine_2 = DetailsForm.AddressLine_2 ?? "";
+//                 user.UserAddress.PostalCode = DetailsForm.PostalCode ?? "";
+//                 user.UserAddress.City = DetailsForm.City ?? "";
+//             }
+
+//             user.Email = DetailsForm.Email;
+//             user.PhoneNumber = DetailsForm.Phone ?? "";
+
+//             var result = await UserManager.UpdateAsync(user);
+
+//             if (!result.Succeeded)
+//             {
+//                 statusMessage = $"An error occurred while updating the account details: {result.Errors.FirstOrDefault()?.Description}";
+//                 return;
+//             }
+//             else
+//             {
+//                 StateHasChanged();
+//                 statusMessage = "Account details updated successfully.";
+//                 return;
+//             }
+//         }
+//         else
+//         {
+//             statusMessage = "User account could not be found.";
+//         }
+//     }
+// }
 
 }

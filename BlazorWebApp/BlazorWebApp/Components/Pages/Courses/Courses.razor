@@ -92,7 +92,7 @@
         {
             var query = new GraphQlQuery
                 {
-                    Query = "{getCourses {id imageUri  isBestseller likes likesInPercent title authors{name} prices {price discount}}}"
+                    Query = "{getCourses {id imageUri  isBestseller likes hours likesInPercent title authors{name} prices {price discount}}}"
                 };
 
             var response = await Http.PostAsJsonAsync("https://courses-provider.azurewebsites.net/api/graphql?code=G2MRX03uMzcUwrgGtP75jTVAcUQB_UAz4ze_kHy0dn4JAzFu0doYJw%3D%3D", query);

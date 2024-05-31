@@ -85,19 +85,75 @@
     [SupplyParameterFromForm]
     public SignUpFormModel SignUpForm { get; set; } = new();
 
-    public async Task OnValidSubmit(EditContext editContext)
+    // public async Task OnValidSubmit(EditContext editContext)
+    // {
+    //     var user = new ApplicationUser
+    //         {
+    //             UserProfile=new UserProfile
+    //             {
+    //                 FirstName = SignUpForm.FirstName,
+    //                 LastName = SignUpForm.LastName
+    //             },
+    //             UserName = SignUpForm.Email,
+    //             Email = SignUpForm.Email
+    //         };
+
+
+    //     try
+    //     {
+    //         var alreadyExists = await UserManager.FindByEmailAsync(SignUpForm.Email);
+    //         if (alreadyExists != null)
+    //         {
+    //             StatusMessage = "An account with this email address already exists!";
+    //             return;
+    //         }
+
+    //         var result = await UserManager.CreateAsync(user, SignUpForm.Password);
+    //         if (!result.Succeeded)
+    //         {
+    //             StatusMessage = "Unable to register account, please try again later.";
+    //             return;
+    //         };
+
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         StatusMessage = "An error occured while created the account.Please try again.";
+    //         return;
+
+    //     }
+    //     var body = new { email = SignUpForm.Email };
+    //     await ServiceBusService.SendServiceBusMessage(body, "Verification", "verification_request");
+  
+    //     if (UserManager.Options.SignIn.RequireConfirmedAccount)
+    //     {
+    //         RedirectManager.RedirectTo("Account/RegisterConfirmation",new() { ["email"] = SignUpForm.Email, ["returnUrl"] = ReturnUrl });
+    //     }
+
+    //     await SignInManager.SignInAsync(user, isPersistent: false);
+    //     RedirectManager.RedirectTo(ReturnUrl);
+    // }
+  
+  public async Task OnValidSubmit(EditContext editContext)
     {
         var user = new ApplicationUser
             {
-                UserProfile=new UserProfile
+                UserProfile = new UserProfile
                 {
                     FirstName = SignUpForm.FirstName,
                     LastName = SignUpForm.LastName
                 },
+                UserAddress = new UserAddress
+                {
+                   
+                    AddressLine_1 = "",
+                    AddressLine_2 = "",
+                    PostalCode = "",
+                    City = ""
+                },
                 UserName = SignUpForm.Email,
                 Email = SignUpForm.Email
             };
-
 
         try
         {
@@ -124,10 +180,10 @@
         }
         var body = new { email = SignUpForm.Email };
         await ServiceBusService.SendServiceBusMessage(body, "Verification", "verification_request");
-  
+
         if (UserManager.Options.SignIn.RequireConfirmedAccount)
         {
-            RedirectManager.RedirectTo("Account/RegisterConfirmation",new() { ["email"] = SignUpForm.Email, ["returnUrl"] = ReturnUrl });
+            RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = SignUpForm.Email, ["returnUrl"] = ReturnUrl });
         }
 
         await SignInManager.SignInAsync(user, isPersistent: false);

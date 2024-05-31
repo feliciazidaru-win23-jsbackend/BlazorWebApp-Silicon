@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using BlazorWebApp.Services;
 using BlazorWebApp.Components.Account;
 using BlazorWebApp;
+using Microsoft.AspNetCore.Components.Forms;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
+builder.Services.AddScoped<ServiceBusService>();
 
 
 builder.Services.AddAuthentication(options =>

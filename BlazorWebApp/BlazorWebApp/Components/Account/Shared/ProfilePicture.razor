@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Text.Json
 
+@inject ApplicationDbContext DbContext
 @inject UserProfileService UserProfileService
 @inject IDbContextFactory<ApplicationDbContext> DbContextFactory
 @inject UserManager<ApplicationUser> UserManager
@@ -39,7 +40,6 @@ else
 }
 
 @code {
-    private ApplicationDbContext dbContext;
     private ApplicationUser? user;
     public IBrowserFile? selectedFile;
     private string? profileImageUrl;
@@ -51,9 +51,6 @@ else
 
     private async Task LoadUserDataAsync()
     {
-        if (dbContext == null)
-            dbContext = DbContextFactory.CreateDbContext();
-
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var userClaims = authState.User;
 
@@ -61,13 +58,33 @@ else
         {
             var userId = UserManager.GetUserId(userClaims);
 
-            user = await dbContext.Users.Include(u => u.UserProfile).FirstOrDefaultAsync(u => u.Id == userId);
+            user = await DbContext.Users.Include(u => u.UserProfile).FirstOrDefaultAsync(u => u.Id == userId);
             if (user?.UserProfile?.ProfileImageUrl != null)
             {
                 profileImageUrl = user.UserProfile.ProfileImageUrl;
             }
         }
     }
+
+    // private async Task LoadUserDataAsync()
+    // {
+    //     if (dbContext == null)
+    //         dbContext = DbContextFactory.CreateDbContext();
+
+    //     var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+    //     var userClaims = authState.User;
+
+    //     if (userClaims.Identity.IsAuthenticated)
+    //     {
+    //         var userId = UserManager.GetUserId(userClaims);
+
+    //         user = await dbContext.Users.Include(u => u.UserProfile).FirstOrDefaultAsync(u => u.Id == userId);
+    //         if (user?.UserProfile?.ProfileImageUrl != null)
+    //         {
+    //             profileImageUrl = user.UserProfile.ProfileImageUrl;
+    //         }
+    //     }
+    // }
 
     protected override async Task OnInitializedAsync()
     {
@@ -113,7 +130,7 @@ else
                     if (!string.IsNullOrEmpty(uploadedImageUrl))
                     {
                         user.UserProfile.ProfileImageUrl = uploadedImageUrl;
-                        await dbContext.SaveChangesAsync();
+                        await DbContext.SaveChangesAsync();
 
                         UserProfileService.SetProfileImageUrl(uploadedImageUrl);
 
