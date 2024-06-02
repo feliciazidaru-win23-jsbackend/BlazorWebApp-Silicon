@@ -56,7 +56,7 @@
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<DynamicGraphQLResponse>();
+                var result = await response.Content.ReadFromJsonAsync<GraphQlResponse>();
 
                 if (result?.Data.TryGetProperty("getCourseById", out var courseElement) == true)
                 {

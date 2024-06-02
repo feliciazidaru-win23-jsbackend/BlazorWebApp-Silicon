@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @layout ManageLayout
 @attribute [StreamRendering]
+
 <div class="content">
     <div class="password-form">
         <h2 class="title">Notifications</h2>
@@ -13,67 +14,16 @@
                 @statusMessage
             </div>
         }
-        <EditForm FormName="subscribe" Model="SubscribeForm" OnValidSubmit="OnSave" method="post" novalidate>
-            <div class="options" style="display: none">
-                <div class="checkbox-group">
-                    <div class="input-group">
-                        <InputCheckbox @bind-Value="SubscribeForm.DailyNewsletter" />
-                        <label>Daily Newsletter</label>
-                    </div>
-                </div>
-                <div class="checkbox-group">
-                    <div class="input-group">
-                        <InputCheckbox @bind-Value="SubscribeForm.AdvertisingUpdates" />
-                        <label>Advertising Updates</label>
-                    </div>
-                </div>
-                <div class="checkbox-group">
-                    <div class="input-group">
-                        <InputCheckbox @bind-Value="SubscribeForm.WeekinReview" />
-                        <label>Week in Review</label>
-                    </div>
-                </div>
-                <div class="checkbox-group">
-                    <div class="input-group">
-                        <InputCheckbox @bind-Value="SubscribeForm.EventUpdates" />
-                        <label>Event Updates</label>
-                    </div>
-                </div>
-                <div class="checkbox-group">
-                    <div class="input-group">
-                        <InputCheckbox @bind-Value="SubscribeForm.StartupsWeekly" />
-                        <label>Startups Weekly</label>
-                    </div>
-                </div>
-                <div class="checkbox-group">
-                    <div class="input-group">
-                        <InputCheckbox @bind-Value="SubscribeForm.Podcasts" />
-                        <label>Podcasts</label>
-                    </div>
-                </div>
-            </div>
 
+        <EditForm FormName="subscribe" Model="SubscribeForm" OnValidSubmit="OnSave" method="post" novalidate>
             <div class="email-input">
-                <label>Prefered email for notifications</label>
+                <label>Email</label>
                 <InputText @bind-Value="SubscribeForm.Email" />
             </div>
-            <div id="newsletter-switch" class="btn-switch" >
-                <label class="switch" for="newsletter-switch-mode">
-                    <InputCheckbox @bind-Value="isEmailValid" @onclick="OnToggleSubscribe" type="checkbox" id="newsletter-switch-mode" />
-                    <span class="slider round"></span>
-                </label>
-                @if (isEmailValid)
-                {
-                    <label>Unsubscribe from Newsletter</label>
-                }
-                else
-                {
-                    <label>Subscribe to Newsletter</label>
-                }
-              </div>
+
             <div class="buttons">
-                <button type="reset" class="button btn-gray">Cancel</button>
-                <button type="submit" class="button btn-theme">Save Changes</button>
+                <button type="button" class="button btn-theme" @onclick="OnToggleSubscribe">Toggle Subscription</button>
+     
             </div>
         </EditForm>
     </div>
@@ -81,7 +31,6 @@
 
 @code {
     private string? statusMessage;
-    private bool isEmailValid;
 
     public SubscribeFormModel SubscribeForm { get; set; } = new SubscribeFormModel();
 
@@ -91,26 +40,18 @@
         [Required(ErrorMessage = "You must enter an email address")]
         [Display(Name = "Email address", Prompt = "Your email")]
         public string Email { get; set; } = null!;
-
-        public bool DailyNewsletter { get; set; } = true;
-        public bool AdvertisingUpdates { get; set; } = true;
-        public bool WeekinReview { get; set; } = true;
-        public bool EventUpdates { get; set; } = true;
-        public bool StartupsWeekly { get; set; } = true;
-        public bool Podcasts { get; set; } = true;
     }
 
+  
 
-   private async Task OnToggleSubscribe()
+    private async Task OnToggleSubscribe()
     {
         try
         {
             HttpResponseMessage result;
 
-            // Check if email is subscribed
             result = await Http.PostAsJsonAsync("https://newsletter-provider-silicon.azurewebsites.net/api/GetSubscriber?code=gwHAAkFs1djblNFn3oXxxd-XzZVID-wV-jgeUYEFvLLcAzFuzj-Hng%3D%3D", new { SubscribeForm.Email });
             var isSubscribed = result.IsSuccessStatusCode;
-             statusMessage = "You are already subscribed!";
 
             if (isSubscribed)
             {
@@ -120,7 +61,14 @@
             else
             {
                 result = await Http.PostAsJsonAsync("https://newsletter-provider-silicon.azurewebsites.net/api/Subscribe?code=Eg8p8-8RCxObyOKhLh5Ze-fCcajP3OjpeMGCs0mSIy3qAzFupV2WQQ%3D%3D", SubscribeForm);
-                statusMessage = "Subscribed to newsletter!";
+                if (result.IsSuccessStatusCode)
+                {
+                    statusMessage = "Subscribed to newsletter!";
+                }
+                else
+                {
+                    statusMessage = "You are already subscribed!";
+                }
             }
 
             if (!result.IsSuccessStatusCode)
@@ -138,7 +86,7 @@
     {
         try
         {
-            // Perform save logic, e.g., save to the database or update form details
+          
             statusMessage = "Form details saved successfully!";
         }
         catch
@@ -146,6 +94,4 @@
             statusMessage = "Unable to save form details! Try again!";
         }
     }
-
 }
- 
